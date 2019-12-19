@@ -1,0 +1,5 @@
+__pycache__/
+data/*
+lib/build/
+lib/faster_rcnn.egg-info
+models/
