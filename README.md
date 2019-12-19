@@ -12,13 +12,8 @@ What I have done is updating the pytorch version from 0.3 to 1.0. (In theory, it
 
 First of all, clone the code
 ```
-$ git clone https://github.com/princewang1994/R-FCN.pytorch.git
-```
-
-Then, create a folder:
-```
-$ cd R-FCN.pytorch && mkdir data
-$ cd data
+$ git clone https://github.com/RebornL/RFCN-pytorch.1.0.git
+$ cd RFCN-pytorch.1.0
 ```
 
 ### prerequisites
@@ -27,7 +22,33 @@ $ cd data
 * Pytorch 1.0.0 (Maybe support higher than 1.0)
 * CUDA 10.0 (I use this version)
 
+### Compilation
+
+Install all the python dependencies using pip:
+
+```
+$ pip install -r requirements.txt
+```
+
+Compile the cuda dependencies using following simple commands:
+
+```
+$ cd lib
+$ python setup.py build develop
+$ cd ..
+```
+
+The nms, roi_pool, roi_align, psroi_pool and psroi_align come from below link. **Thanks for their open source work.**
+
+- NMS, ROIPool, ROIAlign: [jwyangfaster-rcnn.pytorch](https://github.com/jwyang/faster-rcnn.pytorch)
+- PSRoIPool, PSRoIAlign: [McDo/PSROIAlign-Multi-Batch-PyTorch](https://github.com/McDo/PSROIAlign-Multi-Batch-PyTorch)
+
 ### Data Preparation
+
+```shell
+$ mkdir data
+$ cd data
+```
 
 * **PASCAL_VOC 07+12**: Please follow the instructions in [py-faster-rcnn](https://github.com/rbgirshick/py-faster-rcnn#beyond-the-demo-installation-for-training-and-testing-models) to prepare VOC datasets. Actually, you can refer to any others. After downloading the data, creat softlinks in the folder data/.
 * **Pretrained ResNet**: download resnet50 from [here](https://pan.baidu.com/s/1mldNbItcy6T_qAl7sT6faA) (提取码: fba7) and put it to `$RFCN_ROOT/data/pretrained_model/resnet50_rcnn.pth`.
@@ -41,24 +62,6 @@ $ tree data
 ![](./images/dataPath.jpg)
 
 
-### Compilation
-
-Install all the python dependencies using pip:
-```
-$ pip install -r requirements.txt
-```
-
-Compile the cuda dependencies using following simple commands:
-
-```
-$ cd lib
-$ python setup.py build develop
-```
-
-The nms, roi_pool, roi_align, psroi_pool and psroi_align come from below link. **Thanks for their open source work.**
-
-- NMS, ROIPool, ROIAlign: [jwyangfaster-rcnn.pytorch](https://github.com/jwyang/faster-rcnn.pytorch)
-- PSRoIPool, PSRoIAlign: [McDo/PSROIAlign-Multi-Batch-PyTorch](https://github.com/McDo/PSROIAlign-Multi-Batch-PyTorch)
 
 ## Train
 
