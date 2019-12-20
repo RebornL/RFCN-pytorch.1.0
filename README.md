@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project is an pytorch implement R-FCN and CoupleNet, large part code is forked from [princewang1994/RFCN_CoupleNet.pytorch](https://github.com/princewang1994/RFCN_CoupleNet.pytorch). The R-FCN structure is refer to [Caffe R-FCN](https://github.com/daijifeng001/R-FCN) and [Py-R-FCN](https://github.com/YuwenXiong/py-R-FCN)
+This project is an pytorch implement R-FCN, large part code is forked from [princewang1994/RFCN_CoupleNet.pytorch](https://github.com/princewang1994/RFCN_CoupleNet.pytorch). The R-FCN structure is refer to [Caffe R-FCN](https://github.com/daijifeng001/R-FCN) and [Py-R-FCN](https://github.com/YuwenXiong/py-R-FCN)
 
 What I have done is updating the pytorch version from 0.3 to 1.0. (In theory, it should support pytorch.1.x version)
 
@@ -93,7 +93,7 @@ $ python test_net.py --dataset pascal_voc --arch rfcn \
 
 ## Problem
 
-1. train should add `--cuda`
+1. Train should add `--cuda`
 
 2. If you have meet this problem below,
 
@@ -111,7 +111,7 @@ File "/home/reborn/Project/RFCN.pytorch.1.0/lib/roi_data_layer/roidb.py", line 9
 ImportError: cannot import name '_mask'
 ```
 
-you have two way to slove this problem.
+You have two way to slove this problem.
 
 - comment the coco dataset part, if you only use the voc datasets.
 
