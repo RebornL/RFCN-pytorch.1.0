@@ -95,9 +95,9 @@ def parse_args():
                         default=1, type=int)
 
     # resume trained model
-    parser.add_argument('--r', dest='resume',
+    parser.add_argument('--resume', dest='resume',
                         help='resume checkpoint or not',
-                        default=False, type=bool)
+                        action="store_true")
     parser.add_argument('--checksession', dest='checksession',
                         help='checksession to load model',
                         default=1, type=int)
@@ -279,9 +279,15 @@ if __name__ == '__main__':
     elif args.optimizer == "sgd":
         optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
 
+    if args.mGPUs:
+        model = nn.DataParallel(model)
+
+    if args.cuda:
+        model.cuda()
+
     if args.resume:
         load_name = os.path.join(output_dir,
-                                 'rfcn_{}_{}_{}.pth'.format(args.checksession, args.checkepoch, args.checkpoint))
+                                 'faster_rcnn_{}_{}_{}.pth'.format(args.checksession, args.checkepoch, args.checkpoint))
         print("loading checkpoint %s" % (load_name))
         checkpoint = torch.load(load_name)
         args.session = checkpoint['session']
@@ -292,12 +298,6 @@ if __name__ == '__main__':
         if 'pooling_mode' in checkpoint.keys():
             cfg.POOLING_MODE = checkpoint['pooling_mode']
         print("loaded checkpoint %s" % (load_name))
-
-    if args.mGPUs:
-        model = nn.DataParallel(model)
-
-    if args.cuda:
-        model.cuda()
 
     iters_per_epoch = int(train_size / args.batch_size)
 
