@@ -23,17 +23,19 @@ import torch.optim as optim
 
 import torchvision.transforms as transforms
 import torchvision.datasets as dset
-from scipy.misc import imread
+# from scipy.misc import imread
+from imageio import imread
 from roi_data_layer.roidb import combined_roidb
 from roi_data_layer.roibatchLoader import roibatchLoader
 from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
 from model.rpn.bbox_transform import clip_boxes
-from model.nms.nms_wrapper import nms
+# from model.nms.nms_wrapper import nms
+from model.roi_layers.nms import nms
 from model.rpn.bbox_transform import bbox_transform_inv
 from model.utils.net_utils import save_net, load_net, vis_detections
 from model.utils.blob import im_list_to_blob
 from model.faster_rcnn.vgg16 import vgg16
-from model.faster_rcnn.resnet import resnet
+# from model.faster_rcnn.resnet import resnet
 import pdb
 
 try:
@@ -50,21 +52,25 @@ def parse_args():
     parser.add_argument('--dataset', dest='dataset',
                         help='training dataset',
                         default='pascal_voc', type=str)
+    parser.add_argument('--arch', dest='arch', default='rfcn', choices=['rcnn', 'rfcn', 'couplenet'])
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        default='cfgs/vgg16.yml', type=str)
+                        default='cfgs/res50.yml', type=str)
     parser.add_argument('--net', dest='net',
                         help='vgg16, res50, res101, res152',
-                        default='res101', type=str)
+                        default='res50', type=str)
     parser.add_argument('--set', dest='set_cfgs',
                         help='set config keys', default=None,
                         nargs=argparse.REMAINDER)
     parser.add_argument('--load_dir', dest='load_dir',
                         help='directory to load models',
-                        default="/srv/share/jyang375/models")
+                        default="/home/reborn/Project/RFCN_CoupleNet.pytorch/models/rfcn")
     parser.add_argument('--image_dir', dest='image_dir',
                         help='directory to load images for demo',
-                        default="images")
+                        default="Test/JPG")
+    parser.add_argument('--output_path', dest='output_path',
+                        help='directory to save img_detect',
+                        default="Test/JPG_RFCN")
     parser.add_argument('--cuda', dest='cuda',
                         help='whether use CUDA',
                         action='store_true')
@@ -82,10 +88,10 @@ def parse_args():
                         default=1, type=int)
     parser.add_argument('--checkepoch', dest='checkepoch',
                         help='checkepoch to load network',
-                        default=1, type=int)
+                        default=100, type=int)
     parser.add_argument('--checkpoint', dest='checkpoint',
                         help='checkpoint to load network',
-                        default=10021, type=int)
+                        default=1036, type=int)
     parser.add_argument('--bs', dest='batch_size',
                         help='batch_size',
                         default=1, type=int)
@@ -143,6 +149,14 @@ if __name__ == '__main__':
 
     print('Called with args:')
     print(args)
+
+    if args.arch == 'rcnn':
+        from model.faster_rcnn.vgg16 import vgg16
+        from model.faster_rcnn.resnet import resnet
+    elif args.arch == 'rfcn':
+        from model.rfcn.resnet_atrous import resnet
+    elif args.arch == 'couplenet':
+        from model.couplenet.resnet_atrous import resnet
 
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
@@ -216,10 +230,11 @@ if __name__ == '__main__':
         gt_boxes = gt_boxes.cuda()
 
     # make variable
-    im_data = Variable(im_data, volatile=True)
-    im_info = Variable(im_info, volatile=True)
-    num_boxes = Variable(num_boxes, volatile=True)
-    gt_boxes = Variable(gt_boxes, volatile=True)
+    with torch.no_grad():
+        im_data = Variable(im_data)
+        im_info = Variable(im_info)
+        num_boxes = Variable(num_boxes)
+        gt_boxes = Variable(gt_boxes)
 
     if args.cuda > 0:
         cfg.CUDA = True
@@ -331,6 +346,9 @@ if __name__ == '__main__':
         misc_tic = time.time()
         if vis:
             im2show = np.copy(im)
+        
+        if not os.path.exists(args.output_path):
+            os.makedirs(args.output_path)
         for j in xrange(1, len(pascal_classes)):
             inds = torch.nonzero(scores[:,j]>thresh).view(-1)
             # if there is det
@@ -345,7 +363,8 @@ if __name__ == '__main__':
                 cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
                 # cls_dets = torch.cat((cls_boxes, cls_scores), 1)
                 cls_dets = cls_dets[order]
-                keep = nms(cls_dets, cfg.TEST.NMS, force_cpu=not cfg.USE_GPU_NMS)
+                # keep = nms(cls_dets, cfg.TEST.NMS, force_cpu=not cfg.USE_GPU_NMS)
+                keep = nms(cls_boxes[order, :], cls_scores[order], cfg.TEST.NMS)
                 cls_dets = cls_dets[keep.view(-1).long()]
                 if vis:
                     im2show = vis_detections(im2show, pascal_classes[j], cls_dets.cpu().numpy(), 0.5)
@@ -358,10 +377,11 @@ if __name__ == '__main__':
                              .format(num_images + 1, len(imglist), detect_time, nms_time))
             sys.stdout.flush()
 
-        if vis and webcam_num == -1:
+        # if vis and webcam_num == -1:
+        if webcam_num == -1:
             # cv2.imshow('test', im2show)
             # cv2.waitKey(0)
-            result_path = os.path.join(args.image_dir, imglist[num_images][:-4] + "_det.jpg")
+            result_path = os.path.join(args.output_path, imglist[num_images])
             cv2.imwrite(result_path, im2show)
         else:
             im2showRGB = cv2.cvtColor(im2show, cv2.COLOR_BGR2RGB)
